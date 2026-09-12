@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. The project follows
 Semantic Versioning.
 
+## 0.1.1 - 2026-09-12
+
+- Handle delayed, empty, malformed, non-JSON, failed, and timed-out zKillboard
+  responses without exposing internal exceptions.
+- Tell users to retry after five minutes when a new killmail is not available
+  from the zKillboard API yet.
+- Log upstream validation failures with the killmail ID and a safe reason code.
+- Preserve built-in SRP request creation, authorization, and duplicate protection.
+
 ## 0.1.0 - 2026-09-12
 
 - Add configurable State and Group authorization.

@@ -1,3 +1,5 @@
+import os
+
 from allianceauth.project_template.project_name.settings.base import *  # noqa: F403
 
 INSTALLED_APPS += ["allianceauth.srp", "srp_access"]  # noqa: F405
@@ -11,7 +13,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/15",
+        "LOCATION": os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/15"),
         "OPTIONS": {"SOCKET_CONNECT_TIMEOUT": 1, "SOCKET_TIMEOUT": 1},
     }
 }

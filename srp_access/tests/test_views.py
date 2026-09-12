@@ -12,6 +12,7 @@ from allianceauth.srp.models import SrpFleetMain, SrpUserRequest
 from allianceauth.tests.auth_utils import AuthUtils
 
 from srp_access.models import ExposedSrpFleet, SrpAccessSettings
+from srp_access.services import KILLMAIL_NOT_AVAILABLE_MESSAGE, SrpSubmissionError
 
 
 class RestrictedViewsTests(TestCase):
@@ -83,7 +84,7 @@ class RestrictedViewsTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     @patch("srp_access.services.get_universe_types_type_id")
-    @patch("srp_access.services.SRPManager.get_kill_data")
+    @patch("srp_access.services._get_kill_data")
     def test_exposed_submission_creates_builtin_request(self, get_kill_data, get_type):
         self.allow_user()
         get_kill_data.return_value = (12345, 123456789, self.character.character_id)
@@ -112,6 +113,22 @@ class RestrictedViewsTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertFalse(SrpUserRequest.objects.exists())
 
+    @patch("srp_access.services._get_kill_data")
+    def test_unavailable_killmail_shows_retry_later_message(self, get_kill_data):
+        self.allow_user()
+        get_kill_data.side_effect = SrpSubmissionError(
+            KILLMAIL_NOT_AVAILABLE_MESSAGE
+        )
+
+        response = self.client.post(
+            reverse("srp_access:request_srp", args=[self.exposed_fleet.pk]),
+            {"killboard_link": "https://zkillboard.com/kill/138385299/"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Wait at least five minutes")
+        self.assertFalse(SrpUserRequest.objects.exists())
+
     def test_builtin_srp_flow_remains_available(self):
         AuthUtils.add_permission_to_user_by_name("srp.access_srp", self.user)
         self.client.force_login(self.user)
@@ -119,7 +136,7 @@ class RestrictedViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     @patch("srp_access.services.get_universe_types_type_id")
-    @patch("srp_access.services.SRPManager.get_kill_data")
+    @patch("srp_access.services._get_kill_data")
     def test_builtin_admin_can_process_plugin_request(self, get_kill_data, get_type):
         self.allow_user()
         get_kill_data.return_value = (12345, 123456789, self.character.character_id)
@@ -148,3 +165,23 @@ class RestrictedViewsTests(TestCase):
 
         srp_request.refresh_from_db()
         self.assertEqual(srp_request.srp_status, "Approved")
+
+    @patch("srp_access.services.get_universe_types_type_id")
+    @patch("srp_access.services._get_kill_data")
+    def test_duplicate_submission_creates_exactly_one_request(
+        self, get_kill_data, get_type
+    ):
+        self.allow_user()
+        get_kill_data.return_value = (12345, 123456789, self.character.character_id)
+        get_type.return_value = SimpleNamespace(name="Fixture Ship 203")
+        url = reverse("srp_access:request_srp", args=[self.exposed_fleet.pk])
+        data = {"killboard_link": "https://zkillboard.com/kill/323456789/"}
+
+        first_response = self.client.post(url, data)
+        second_response = self.client.post(url, data)
+
+        self.assertRedirects(first_response, reverse("srp_access:fleet_list"))
+        self.assertEqual(second_response.status_code, 200)
+        self.assertContains(second_response, "already been submitted")
+        self.assertEqual(SrpUserRequest.objects.count(), 1)
+        get_kill_data.assert_called_once_with("323456789")
