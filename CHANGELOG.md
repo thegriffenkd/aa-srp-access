@@ -3,6 +3,10 @@
 All notable changes to this project are documented here. The project follows
 Semantic Versioning.
 
+## 0.1.3 - 2026-09-12
+
+- Show the installed package version in the Django admin application heading.
+
 ## 0.1.2 - 2026-09-12
 
 - Assign one or more access Groups to each exposed SRP fleet.

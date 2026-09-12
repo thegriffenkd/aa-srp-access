@@ -48,7 +48,7 @@ mappings, and the built-in `srp.SrpFleetMain` model.
 Add a pinned release to the Alliance Auth requirements file:
 
 ```text
-aa-srp-access==0.1.2
+aa-srp-access==0.1.3
 ```
 
 Add the Python module to local settings:
@@ -74,7 +74,7 @@ procedure. No Alliance Auth core files or core migrations are changed.
 Service names vary between deployments. From the correct Compose project
 directory, the usual sequence is:
 
-1. Add `aa-srp-access==0.1.2` to `conf/requirements.txt`.
+1. Add `aa-srp-access==0.1.3` to `conf/requirements.txt`.
 2. Add `srp_access` to `INSTALLED_APPS` in local Django settings.
 3. Rebuild the Alliance Auth image with `docker compose build`.
 4. Run `docker compose run --rm <web-service> python manage.py migrate srp_access`.
