@@ -1,0 +1,27 @@
+{% extends "allianceauth/base-bs5.html" %}
+{% load i18n %}
+
+{% block page_title %}{{ fleet.fleet_name }}{% endblock %}
+{% block header_nav_brand %}{% translate "Restricted Ship Replacement" %}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header"><strong>{{ fleet.fleet_name }}</strong></div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">{% translate "Fleet time" %}</dt>
+                <dd class="col-sm-9">{{ fleet.fleet_time|date:"Y-m-d H:i" }}</dd>
+                <dt class="col-sm-3">{% translate "Doctrine" %}</dt>
+                <dd class="col-sm-9">{{ fleet.fleet_doctrine }}</dd>
+                <dt class="col-sm-3">{% translate "Commander" %}</dt>
+                <dd class="col-sm-9">{{ fleet.fleet_commander|default:"—" }}</dd>
+            </dl>
+            <a class="btn btn-success" href="{% url 'srp_access:request_srp' fleet.pk %}">
+                {% translate "Submit SRP request" %}
+            </a>
+            <a class="btn btn-secondary" href="{% url 'srp_access:fleet_list' %}">
+                {% translate "Back" %}
+            </a>
+        </div>
+    </div>
+{% endblock %}

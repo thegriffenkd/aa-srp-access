@@ -1,0 +1,45 @@
+{% extends "allianceauth/base-bs5.html" %}
+{% load i18n %}
+
+{% block page_title %}{% translate "Restricted SRP" %}{% endblock %}
+{% block header_nav_brand %}{% translate "Restricted Ship Replacement" %}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">{% translate "Fleets accepting requests" %}</div>
+        <div class="card-body p-0">
+            {% if fleets %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% translate "Fleet" %}</th>
+                                <th>{% translate "Time" %}</th>
+                                <th>{% translate "Doctrine" %}</th>
+                                <th>{% translate "Commander" %}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fleet in fleets %}
+                                <tr>
+                                    <td>{{ fleet.fleet_name }}</td>
+                                    <td>{{ fleet.fleet_time|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ fleet.fleet_doctrine }}</td>
+                                    <td>{{ fleet.fleet_commander|default:"—" }}</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-primary btn-sm" href="{% url 'srp_access:fleet_detail' fleet.pk %}">
+                                            {% translate "Open" %}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted m-3">{% translate "No fleets are currently available." %}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

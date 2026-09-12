@@ -1,0 +1,20 @@
+{% extends "allianceauth/base-bs5.html" %}
+{% load django_bootstrap5 %}
+{% load i18n %}
+
+{% block page_title %}{% translate "Submit SRP request" %}{% endblock %}
+{% block header_nav_brand %}{% translate "Restricted Ship Replacement" %}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header"><strong>{{ fleet.fleet_name }}</strong></div>
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button class="btn btn-success" type="submit">{% translate "Submit request" %}</button>
+                <a class="btn btn-secondary" href="{% url 'srp_access:fleet_detail' fleet.pk %}">{% translate "Cancel" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}
