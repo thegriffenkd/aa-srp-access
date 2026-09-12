@@ -19,7 +19,8 @@ class RestrictedViewsTests(TestCase):
     def setUp(self):
         self.state = State.objects.create(name="Fixture state 201", priority=201, public=True)
         self.group = Group.objects.create(name="Fixture group 201")
-        SrpAccessSettings.objects.create(required_group=self.group)
+        self.other_group = Group.objects.create(name="Fixture group 202")
+        SrpAccessSettings.objects.create()
 
         self.user = User.objects.create_user("restricted-view-user")
         self.user.profile.state = self.state
@@ -50,7 +51,10 @@ class RestrictedViewsTests(TestCase):
             fleet_time=timezone.now(),
             fleet_srp_code="EXPOSE01",
         )
-        ExposedSrpFleet.objects.create(fleet=self.exposed_fleet)
+        hidden_exposure = ExposedSrpFleet.objects.create(fleet=self.hidden_fleet)
+        hidden_exposure.groups.add(self.other_group)
+        exposed_exposure = ExposedSrpFleet.objects.create(fleet=self.exposed_fleet)
+        exposed_exposure.groups.add(self.group)
 
     def allow_user(self):
         AuthUtils.disconnect_signals()

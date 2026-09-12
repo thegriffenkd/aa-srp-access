@@ -8,14 +8,6 @@ from allianceauth.srp.models import SrpFleetMain
 
 
 class SrpAccessSettings(SingletonModel):
-    required_group = models.ForeignKey(
-        Group,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name="+",
-        verbose_name=_("required access group"),
-    )
     allow_any_public_state = models.BooleanField(
         default=True,
         verbose_name=_("allow any public state"),
@@ -44,6 +36,16 @@ class ExposedSrpFleet(models.Model):
         on_delete=models.CASCADE,
         related_name="srp_access_exposure",
         verbose_name=_("built-in SRP fleet"),
+    )
+    groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name="+",
+        verbose_name=_("access groups"),
+        help_text=_(
+            "Users must belong to at least one selected group to see this fleet. "
+            "An exposure without groups is inaccessible."
+        ),
     )
     enabled = models.BooleanField(default=True)
 

@@ -34,6 +34,11 @@ class SrpAccessSettingsAdmin(SrpManagementPermissionMixin, SingletonModelAdmin):
 @admin.register(ExposedSrpFleet)
 class ExposedSrpFleetAdmin(SrpManagementPermissionMixin, admin.ModelAdmin):
     list_display = ("fleet", "enabled")
-    list_filter = ("enabled",)
+    list_filter = ("enabled", "groups")
     list_select_related = ("fleet",)
-    search_fields = ("fleet__fleet_name", "fleet__fleet_srp_code")
+    filter_horizontal = ("groups",)
+    search_fields = (
+        "fleet__fleet_name",
+        "fleet__fleet_srp_code",
+        "groups__name",
+    )

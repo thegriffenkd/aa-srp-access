@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The project follows
 Semantic Versioning.
 
+## 0.1.2 - 2026-09-12
+
+- Assign one or more access Groups to each exposed SRP fleet.
+- Restrict fleet lists, detail pages, and submissions to the Groups mapped to
+  that specific fleet.
+- Migrate the previous global required Group onto every existing exposure to
+  preserve access during upgrades.
+
 ## 0.1.1 - 2026-09-12
 
 - Handle delayed, empty, malformed, non-JSON, failed, and timed-out zKillboard

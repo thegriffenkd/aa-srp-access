@@ -7,9 +7,11 @@ restricted frontend for Alliance Auth's built-in Ship Replacement Program
 Restricted users can access the frontend only when both conditions are true:
 
 - their Alliance Auth State is eligible; and
-- they belong to the configured Django/Alliance Auth Group.
+- they belong to a Django/Alliance Auth Group assigned to the requested fleet.
 
-They see only built-in SRP fleets explicitly exposed by an administrator.
+They see only built-in SRP fleets explicitly exposed to one of their Groups by
+an administrator. Different Groups can therefore have separate fleet lists,
+while a fleet may deliberately be shared with multiple Groups.
 Requests are stored as normal built-in `SrpUserRequest` records, so existing
 SRP administrators continue to approve, reject, update, and pay them through
 the normal Alliance Auth SRP interface.
@@ -32,8 +34,8 @@ returns a safe 404. Anonymous users are redirected to login; authenticated
 users who fail the State or Group check receive 403.
 
 State, Group, and fleet names are never authorization constants. Configuration
-uses database relations to `authentication.State`, `auth.Group`, and the
-built-in `srp.SrpFleetMain` model.
+uses database relations to `authentication.State`, per-fleet `auth.Group`
+mappings, and the built-in `srp.SrpFleetMain` model.
 
 ## Requirements
 
@@ -46,7 +48,7 @@ built-in `srp.SrpFleetMain` model.
 Add a pinned release to the Alliance Auth requirements file:
 
 ```text
-aa-srp-access==0.1.0
+aa-srp-access==0.1.2
 ```
 
 Add the Python module to local settings:
@@ -72,7 +74,7 @@ procedure. No Alliance Auth core files or core migrations are changed.
 Service names vary between deployments. From the correct Compose project
 directory, the usual sequence is:
 
-1. Add `aa-srp-access==0.1.0` to `conf/requirements.txt`.
+1. Add `aa-srp-access==0.1.2` to `conf/requirements.txt`.
 2. Add `srp_access` to `INSTALLED_APPS` in local Django settings.
 3. Rebuild the Alliance Auth image with `docker compose build`.
 4. Run `docker compose run --rm <web-service> python manage.py migrate srp_access`.
@@ -88,12 +90,14 @@ blindly into a production deployment.
 
 1. Sign in to Django admin as a staff user with `auth.srp_management`.
 2. Open **Restricted SRP settings**.
-3. Select the required access Group.
-4. Choose State behavior:
+3. Choose State behavior:
    - enable **allow any public state** to require `State.public=True`; or
    - disable it and select one or more specific State objects.
-5. Add **Exposed SRP fleet** rows for existing built-in SRP fleets.
+4. Add **Exposed SRP fleet** rows for existing built-in SRP fleets.
+5. On each exposure, select the Group or Groups allowed to see that fleet.
 6. Leave an exposure enabled only while that fleet should be available.
+
+An exposure with no selected Groups is inaccessible by design.
 
 An exposed fleet must also be open in built-in SRP: it needs a non-empty SRP
 code and an incomplete status. Disabling or completing it in built-in SRP
@@ -101,8 +105,9 @@ removes it from the restricted list without deleting the exposure mapping.
 
 ## Permissions and groups
 
-The access Group is application data selected in admin; its name is not fixed.
-State eligibility and Group membership are both mandatory. Superuser or staff
+Access Groups are application data selected separately on each fleet exposure;
+their names are not fixed. State eligibility and membership of at least one
+Group assigned to the requested fleet are both mandatory. Superuser or staff
 status does not bypass the restricted frontend's State-and-Group rule.
 
 Configuration in Django admin is guarded by Alliance Auth's existing
@@ -112,9 +117,10 @@ not modified.
 ## How to expose fleets
 
 Create fleets through the normal built-in SRP interface. In Django admin, add
-an **Exposed SRP fleet** mapping and select the existing fleet object. The
-one-to-one relation prevents duplicate mappings. Removing a built-in fleet also
-removes its exposure mapping; it does not affect unrelated SRP data.
+an **Exposed SRP fleet** mapping, select the existing fleet object, and select
+its access Groups. The one-to-one relation prevents duplicate fleet mappings.
+Removing a built-in fleet also removes its exposure mapping; it does not affect
+unrelated SRP data.
 
 ## Upgrading
 
@@ -124,6 +130,10 @@ removes its exposure mapping; it does not affect unrelated SRP data.
 4. Run `python manage.py migrate srp_access`.
 5. Run `collectstatic` when release notes require it.
 6. Recreate services and verify both SRP frontends.
+
+When upgrading from 0.1.1, the migration copies the previous global required
+Group to every existing fleet exposure before removing the global field. You
+can then split those mappings into separate Groups in Django admin.
 
 Test Alliance Auth upgrades on a test server with the currently pinned plugin
 version before upgrading production.
@@ -153,8 +163,9 @@ python -m twine check dist/*
 ```
 
 The test suite uses SQLite and arbitrary fixture names. It covers anonymous,
-State, Group, exposed-fleet, direct URL, submission, built-in SRP regression,
-and built-in administrator behavior.
+State, per-fleet Group isolation, migration of legacy Group mappings, direct
+URL protection, submission, built-in SRP regression, and built-in administrator
+behavior.
 
 ## Release process
 

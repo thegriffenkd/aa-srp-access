@@ -32,22 +32,20 @@ def user_has_eligible_state(user, settings=None):
     return settings.selected_states.filter(pk=state.pk).exists()
 
 
-def user_in_required_group(user, settings=None):
+def user_has_exposed_fleet(user, fleet=None):
     if not getattr(user, "is_authenticated", False):
         return False
 
-    settings = settings or get_access_settings()
-    if settings is None or settings.required_group_id is None:
-        return False
-
-    return user.groups.filter(pk=settings.required_group_id).exists()
-
-
-def fleet_is_exposed(fleet):
-    fleet_id = getattr(fleet, "pk", fleet)
-    if fleet_id is None:
-        return False
-    return ExposedSrpFleet.objects.filter(fleet_id=fleet_id, enabled=True).exists()
+    exposures = ExposedSrpFleet.objects.filter(
+        enabled=True,
+        groups__in=user.groups.all(),
+    )
+    if fleet is not None:
+        fleet_id = getattr(fleet, "pk", fleet)
+        if fleet_id is None:
+            return False
+        exposures = exposures.filter(fleet_id=fleet_id)
+    return exposures.exists()
 
 
 def can_use_restricted_srp(user, fleet=None):
@@ -56,9 +54,7 @@ def can_use_restricted_srp(user, fleet=None):
         return False
     if not user_has_eligible_state(user, settings):
         return False
-    if not user_in_required_group(user, settings):
-        return False
-    if fleet is not None and not fleet_is_exposed(fleet):
+    if not user_has_exposed_fleet(user, fleet):
         return False
     return True
 
@@ -72,8 +68,10 @@ def accessible_fleets_for(user):
         SrpFleetMain.objects.select_related("fleet_commander")
         .filter(
             srp_access_exposure__enabled=True,
+            srp_access_exposure__groups__in=user.groups.all(),
             fleet_srp_status="",
         )
         .exclude(fleet_srp_code="")
+        .distinct()
         .order_by("-fleet_time", "-pk")
     )
